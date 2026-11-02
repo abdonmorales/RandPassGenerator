@@ -1,6 +1,6 @@
-RandPassGenerator 1.3.4
+RandPassGenerator 1.4.0
 
-The RandPassGenerator Java application is a simple command-line utility for generating random passwords, passphrases, and raw hex keys.  It is designed very conservatively to ensure that the random values it provides offer full cryptographic strength requested by the user.
+The RandPassGenerator Java application is a simple utility for generating random passwords, passphrases, and raw hex keys, usable from the command line or from a graphical interface.  It is designed very conservatively to ensure that the random values it provides offer full cryptographic strength requested by the user.
 
 USAGE INFORMATION
 
@@ -9,7 +9,7 @@ To use RandPassGenerator, you'll need the Oracle Java Runtime Environment; any r
 The RandPassGenerator can also run from a terminal or console.
 The command-line syntax is simple:
 
-	java -jar RandPassGenerator.jar  [options]
+	java -jar PassGenerator.jar  [options]
 
 The following options are accepted:
   
@@ -25,7 +25,7 @@ Common options:
   
 -k N	   Generate N random keys of the specified strength
  
--enc	   Encrypt generated random key using a random password that is at least a 16 characters (256-bit AES) and write to file named the Key ID (KEY_ID.enc). A prompt for a random password to us will appear. Users should generate a random password to use for encryption prior to generating keys. ("java -jar RandPassGenerator.jar -pw 1 -str 96" will generate a 16 character password).
+-enc	   Encrypt generated random key using a random password that is at least a 16 characters (256-bit AES) and write to file named the Key ID (KEY_ID.enc). A prompt for a random password to us will appear. Users should generate a random password to use for encryption prior to generating keys. ("java -jar PassGenerator.jar -pw 1 -str 96" will generate a 16 character password).
 
 -decrypt   Decrypt encrypted key file using a random password that is at least a 16 characters and save as text file (KEY_ID_decrypted.txt). A prompt for the name of the encrypted file to decrypt will appear, then a prompt for the random password to use will appear. 
 
@@ -69,6 +69,8 @@ RandPassGenerator also has a graphical interface, built with Swing and using the
     java -jar PassGenerator.jar -gui
 
 Running the jar with no arguments and no console attached (for example, by double-clicking it) also opens the graphical interface.
+
+The Generate tab offers passwords, passphrases, or hex keys, with the count, strength, chunk formatting, character set, passphrase word length, random uppercase, word list, and key encryption settings that the command-line options provide.  Key encryption takes a password of at least 16 characters, typed and confirmed in the window, and writes KEY_ID.enc files to a chosen folder.  Results can be copied to the clipboard or saved to a file.  The Decrypt Key tab decrypts an encrypted key file, shows the key, and saves it next to the encrypted file as FILE_decrypted.txt, the same as -decrypt.  The graphical interface logs to the same files as the command-line tool.
 
 
 Below are some examples of running RandPassGenerator in normal ways:

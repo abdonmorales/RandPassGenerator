@@ -6,7 +6,7 @@
 
     <target name="compile">
         <mkdir dir="build/classes"/>
-        <javac includeantruntime="false" srcdir="src" destdir="build/classes"/>
+        <javac includeantruntime="false" release="9" srcdir="src" destdir="build/classes"/>
     </target>
 
     <target name="jar" depends="compile">
@@ -14,7 +14,6 @@
         <mkdir dir="build/data"/>
 	<copy file="data/wordlist.txt" todir="build/data" />
         <jar destfile="build/jar/PassGenerator.jar" basedir="build/classes">
-            <fileset dir="build/classes"/>
             <fileset dir="build/data"/>
             <manifest>
                 <attribute name="Main-Class" value="gov.nsa.ia.pass.RandPassGenerator"/> 

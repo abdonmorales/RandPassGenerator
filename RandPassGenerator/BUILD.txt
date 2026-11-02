@@ -1,12 +1,12 @@
-RandPassGenerator 1.3.4
+RandPassGenerator 1.4.0
 
-The RandPassGenerator Java application is a simple command-line utility for generating random passwords, passphrases, and raw hex keys.  It is designed very conservatively to ensure that the random values it provides offer full cryptographic strength requested by the user.  This text file describes how to build the RandPassGenerator from source code. 
+The RandPassGenerator Java application is a simple command-line and graphical utility for generating random passwords, passphrases, and raw hex keys.  It is designed very conservatively to ensure that the random values it provides offer full cryptographic strength requested by the user.  This text file describes how to build the RandPassGenerator from source code. 
 
 DEPENDENCIES
 
 To build RandPassGenerator from source, you will need:
    
-1. Oracle Java SDK (J2SE), version 1.9 or later  [Java 9]
+1. Java SDK (Oracle or OpenJDK), version 1.9 or later  [Java 9]
    
 2. Apache Ant   [The version that comes with J2SE is ok]
 
@@ -41,6 +41,10 @@ If the Ant process concludes with anything other than "BUILD SUCCESSFUL", there'
 Step 5 - Test the RandPassGenerator with a simple generation task, using the options shown below.
 
 	% java -jar build/jar/PassGenerator.jar -v -str 128 -k 7
+
+On a computer with a graphical display, you can also check the graphical interface:
+
+	% java -jar build/jar/PassGenerator.jar -gui
 
 
 UNIT TESTING

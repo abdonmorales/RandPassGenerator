@@ -146,7 +146,7 @@ CHANGES FROM  1.3.3  to  1.3.4
 * Removed various unwanted words from the builtin wordlist
 * Stopped passing the Ant runtime to the Java compiler
 
-CHANGES SINCE  1.3.4
+CHANGES FROM  1.3.4  to  1.4.0
 * Added a Swing graphical user interface (RandPassGeneratorGUI) using the
   Nimbus look and feel.  Open it with the -gui option, or by running the jar
   with no arguments and no console attached.  It supports passwords,
@@ -154,3 +154,11 @@ CHANGES SINCE  1.3.4
   generated keys with a password, and decryption of encrypted key files.
 * Added KeyWrapper.wrapKeyToFile and KeyUnwrapper.unwrapKeyToFile, which
   report success or failure and never prompt on the console.
+* The build now targets Java 9 (javac release="9"), so the jar runs on
+  Java 9 or later whichever JDK builds it.
+* Fixed build.xml adding every class to the jar twice.
+* Added a GitHub Actions workflow that builds PassGenerator.jar and
+  publishes it, with a SHA-256 checksum, as a GitHub release when a
+  version tag is pushed.
+* Updated README.md, README.txt, and BUILD.txt for the graphical interface
+  and the 1.4.0 release.

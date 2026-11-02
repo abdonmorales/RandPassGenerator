@@ -1,12 +1,17 @@
 # RandPassGenerator
-RandPassGenerator 1.3.3
+RandPassGenerator 1.4.0
 
-The RandPassGenerator Java application is a simple command-line utility for generating random passwords, passphrases, and raw keys. It is designed very conservatively to ensure that the random values it provides offer full cryptographic strength requested by the user. 
+The RandPassGenerator Java application is a simple utility for generating random passwords, passphrases, and raw keys, usable from the command line or from a graphical interface. It is designed very conservatively to ensure that the random values it provides offer full cryptographic strength requested by the user. 
+
+
+### Download
+
+A prebuilt jar file, PassGenerator.jar, is attached to each release on the [Releases page](https://github.com/abdonmorales/RandPassGenerator/releases). It requires a Java Runtime Environment, version 9 or later. To build it yourself instead, see below.
 
 
 ### Build Information
 
-To build the RandPassGenerator jar file, use the Oracle Java SDK; any recent version should be fine.
+To build the RandPassGenerator jar file, use a Java SDK (Oracle or OpenJDK), version 9 or later, and Apache Ant.
 
 Go to the directory containing build.xml, and run ant as shown below.
 
@@ -16,23 +21,37 @@ This will create build/jar/PassGenerator.jar.  Copy the jar file to somewhere co
 
 	cp build/jar/PassGenerator.jar $HOME
 
+See [BUILD.txt](./RandPassGenerator/BUILD.txt) for step-by-step build and unit test instructions.
+
 
 ### Usage Information
 
 
-To use RandPassGenerator, you'll need the Oracle Java Runtime Environment; any recent version should be sufficient, but at a minimum version 9 is recommended.
+To use RandPassGenerator, you'll need a Java Runtime Environment (Oracle or OpenJDK); any recent version should be sufficient, but at a minimum version 9 is recommended.
 
-The RandPassGenerator can run from a terminal or console. The command-line syntax is simple:
+RandPassGenerator can run from a terminal or console, or as a desktop application (see "Graphical Interface" below). The command-line syntax is simple:
 
 	java -jar PassGenerator.jar  [options]
 
-### Graphical interface
+### Graphical Interface
 
-RandPassGenerator also includes a Swing graphical interface (using the Nimbus look and feel) that offers the same password, passphrase, and key generation features, plus key encryption and decryption, without needing the command line. Open it with:
+RandPassGenerator also includes a Swing graphical interface, using the Nimbus look and feel, that offers the same features as the command line. Open it with:
 
 	java -jar PassGenerator.jar -gui
 
-Double-clicking the jar file (running it with no arguments and no console attached) also opens the graphical interface. The interface writes its log to ./randpass.log, the same as the command-line tool.
+Double-clicking the jar file (running it with no arguments and no console attached) also opens the graphical interface.
+
+The window has two tabs:
+
+* **Generate** - choose passwords, passphrases, or hex keys, how many to make, and the strength in bits (default 160, maximum 384). Passwords and keys can be split into chunks with a separator (like -c and -sep). Type-specific options appear below the settings:
+  * Passwords: the default character set, a chosen mix of lowercase, uppercase, digits, and punctuation (like -pwcs), or a custom character set file (like -pwcustom).
+  * Passphrases: the longest word length (like -pplen), random uppercasing of the first N letters of each word (like -rcc), and an optional word list file or URL (like -ppurl).
+  * Hex keys: optionally encrypt each key with a password of at least 16 characters, writing KEY_ID.enc files to a chosen folder (like -enc, but the password is typed once in the window and confirmed instead of at a console prompt).
+
+  Results appear in the output area, where they can be copied to the clipboard or saved to a file.
+* **Decrypt Key** - choose an encrypted key file and enter its password. The decrypted key is shown in the window and saved next to the encrypted file as FILE_decrypted.txt, the same as -decrypt.
+
+The random generator is initialized and self-tested once when the window opens; generation is enabled when the status bar shows "Ready". The interface logs to ./randpass.log, and records key IDs in ./randpassGenKeys.log, the same as the command-line tool. No key, password, or passphrase values are written to the log files.
 
 ### Options
 
@@ -72,7 +91,7 @@ Unusual options:
 
 -gui      {Open the graphical user interface; all other options are ignored}
 
-At least one of the options -pw, -pp, or -k must be supplied. The keys, passwords, or passphrases produced by RandPassGenerator will be written to the standard output (stdout), so they can easily be redirected to a file. The -out option can also be used to write the output to a file. All messages are written to the standard error (stderr).
+At least one of the options -pw, -pp, or -k must be supplied (unless -gui or -decrypt is used). The keys, passwords, or passphrases produced by RandPassGenerator will be written to the standard output (stdout), so they can easily be redirected to a file. The -out option can also be used to write the output to a file. All messages are written to the standard error (stderr).
 
 Detailed log messages are appended to the specified log file - if the log file cannot be opened, then the tool will not run. 
 
@@ -122,6 +141,10 @@ Example 7: Decrypt encrypted key file.
 Example 8: generate 6 passphrases at strength ~100, but using base strength of 94 plus random upcase of first letter
 
 	java -jar PassGenerator.jar -pp 6 -pplen 7 -str 94 -rcc 1
+
+Example 9: open the graphical interface
+
+	java -jar PassGenerator.jar -gui
 
 
 ### Design Information
