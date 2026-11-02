@@ -77,23 +77,64 @@ public class RandPassGenerator {
     boolean verbose;
     private PrintWriter outputWriter;
     boolean enc;
+    private boolean selfTestPassed = false;
 
     // extra formatting
     private boolean useChunking = false;
     private int chunkSize = 0;
     private String chunkSep = null;
+
+    // destination for user-facing messages; stderr unless a GUI replaces it
+    private volatile java.util.function.Consumer<String> messageSink = null;
     
     /**
-     * Print an error message to stderr
+     * Print an error message to stderr, or to the message sink if one is set
      */
     private void message(String s) {
-	System.err.println(s);
+	java.util.function.Consumer<String> sink = messageSink;
+	if (sink != null) {
+	    sink.accept(s);
+	} else {
+	    System.err.println(s);
+	}
     }
     /**
-     * Print a message to stderr, if verbose is turned on.
+     * Print a message to stderr (or the message sink), if verbose is turned on.
      */    
     private void startmessage(String s) {
-	if (verbose) System.err.println(s);
+	if (verbose) message(s);
+    }
+
+    /**
+     * Redirect user-facing messages (normally written to stderr) to
+     * the given consumer.  Supply null to go back to stderr.  This
+     * is used by the graphical interface.
+     *
+     * @param sink consumer that receives each message, or null for stderr
+     */
+    public void setMessageSink(java.util.function.Consumer<String> sink) {
+	messageSink = sink;
+    }
+
+    /**
+     * Replace the writer to which generated values are written.
+     *
+     * @param pw a usable PrintWriter, may not be null
+     */
+    public void setOutputWriter(PrintWriter pw) {
+	if (pw == null) {
+	    throw new IllegalArgumentException("Output print writer must not be null.");
+	}
+	outputWriter = pw;
+    }
+
+    /**
+     * Return true if the underlying random generator initialized,
+     * passed its self-tests, and is ready to generate values.
+     */
+    public boolean isReady() {
+	RandManager rm = randman;
+	return selfTestPassed && rm != null && rm.isOkay();
     }
 
     /**
@@ -200,8 +241,9 @@ public class RandPassGenerator {
 		logger.info("RandPassGen - initialization succeeded, proceeding to self-test.");
 		if (randman.performSelfTest()) {
 		    startmessage("Random generation manager self-tests passed.");
+		    selfTestPassed = true;
 		} else {
-		    System.err.println("Randomness self-test failed.  Exiting.");
+		    message("Randomness self-test failed.  Exiting.");
 		}
 	    }
 
@@ -319,8 +361,8 @@ public class RandPassGenerator {
 	    return -1;
 	}
 	
-	drbg = randman.getDRBG();
-	if (!(drbg.isOkay())) {
+	drbg = (randman == null) ? null : randman.getDRBG();
+	if (drbg == null || !(drbg.isOkay())) {
 	    logger.severe("RandPassGen - DRBG is not ok, error");
 	    message("Error - DRBG is not usable, sorry.");
 	    return -1;
@@ -431,8 +473,8 @@ public class RandPassGenerator {
 	}
 	if (ruc < 0) ruc = 0;
 	
-	drbg = randman.getDRBG();
-	if (!(drbg.isOkay())) {
+	drbg = (randman == null) ? null : randman.getDRBG();
+	if (drbg == null || !(drbg.isOkay())) {
 	    logger.severe("RandPassGen - DRBG is not ok, error");
 	    message("Error - DRBG is not usable, sorry.");
 	    return -1;
@@ -505,6 +547,31 @@ public class RandPassGenerator {
      * @return number of passphrases generated, or -1 on error.
      */
     public int generateKeys(int count, int strength, boolean enc) {
+	return generateKeys(count, strength, enc, null, null);
+    }
+
+    /**
+     * Generate some raw hexadecimal keys of specified strength,
+     * optionally encrypting each one to a file with a password that
+     * the caller supplies, rather than one read from the console.
+     * All keys will be output to the designated output writer.
+     *
+     * @param count  how many keys to generate, positive
+     * @param strength key strength in bits, usually 128, 160, or 256
+     * @param encPassword password (at least 16 characters) used to encrypt each key to KEY_ID.enc, or null for no encryption
+     * @param encDir directory in which to write encrypted key files, or null for the current directory
+     * @return number of keys generated, or -1 on error.
+     */
+    public int generateKeys(int count, int strength, char[] encPassword, File encDir) {
+	if (encPassword != null && encPassword.length < KeyWrapper.MIN_PASSWORD_LENGTH) {
+	    logger.warning("RandPassGen - key encryption password too short, error");
+	    message("Error - key encryption password must be at least " + KeyWrapper.MIN_PASSWORD_LENGTH + " characters");
+	    return -1;
+	}
+	return generateKeys(count, strength, encPassword != null, encPassword, encDir);
+    }
+
+    private int generateKeys(int count, int strength, boolean enc, char[] encPassword, File encDir) {
 	HexKeyGen kg;
 	AbstractDRBG drbg;
 
@@ -514,8 +581,8 @@ public class RandPassGenerator {
 	    return -1;
 	}
 	
-	drbg = randman.getDRBG();
-	if (!(drbg.isOkay())) {
+	drbg = (randman == null) ? null : randman.getDRBG();
+	if (drbg == null || !(drbg.isOkay())) {
 	    logger.severe("RandPassGen - DRBG is not ok, error");
 	    message("Error - DRBG is not usable, sorry.");
 	    return -1;
@@ -564,6 +631,7 @@ public class RandPassGenerator {
 	int a = 0;
 
 	ArrayList<String> hkeyIDs = generateKeyIDList(hkeys);
+	int encFailures = 0;
 	for(String p: keys) {
 	    // TODO: refactor the code below to merge common output code
 	    if (useChunking) {
@@ -583,14 +651,29 @@ public class RandPassGenerator {
 	    // if user asked for password encryption, create an encrypted file for
 	    // just that particular key
 	    if (enc) {
-		encryptFileWithPassword(keyfilename, p);
-		logger.fine("RandPassGen - encrypted key " + keyfilename + " with password");
+		if (encPassword != null) {
+		    File encFile = new File(encDir, keyfilename + ".enc");
+		    if (KeyWrapper.wrapKeyToFile(encPassword, p, encFile)) {
+			message("Encrypted key " + keyfilename + " to " + encFile);
+			logger.fine("RandPassGen - encrypted key " + keyfilename + " with password");
+		    } else {
+			message("Error - failed to encrypt key " + keyfilename + " to " + encFile);
+			logger.warning("RandPassGen - failed to encrypt key " + keyfilename);
+			encFailures++;
+		    }
+		} else {
+		    encryptFileWithPassword(keyfilename, p);
+		    logger.fine("RandPassGen - encrypted key " + keyfilename + " with password");
+		}
 	    }	
 	}
 	
 	outputWriter.flush();
 	logger.info("RandPassGen - output keys to designated output channel");
 
+	if (encFailures > 0) {
+	    return -1;
+	}
 	return keys.size();
     }
      
@@ -706,6 +789,7 @@ public class RandPassGenerator {
 	ret.addOption("decrypt", "Decrypt an encrypted key file using password", true, "-decrypt", null);
 	ret.addOption("enc", "Encrypt each key to a file using password (only for -k)", false, "-enc", null);
 	ret.addOption("randUpcase", "For passphrases, apply uppercase randomly to first N letters of each word", true, "-rcc", null);
+	ret.addOption("gui", "Open the graphical user interface (all other options are ignored)", false, "-gui", null);
 	return ret;
     }
 
@@ -722,6 +806,14 @@ public class RandPassGenerator {
 	
 	OptionManager opt = makeOptions();
 
+	// With no arguments and no attached console (e.g. the jar was
+	// double-clicked), open the graphical interface instead of printing
+	// usage text that nobody would see.
+	if (args.length == 0 && System.console() == null && !java.awt.GraphicsEnvironment.isHeadless()) {
+	    RandPassGeneratorGUI.launch();
+	    return;
+	}
+
 	if (args.length == 0) {
 	    System.err.println("RandPassGenerator - exceptionally conservative utility for");
 	    System.err.println("generating random keys, passwords, and passphrases");
@@ -730,7 +822,8 @@ public class RandPassGenerator {
 	    System.err.println("Command-line options must be supplied.  Options are:");
 	    System.err.println(opt.generateUsageText());
 	    System.err.println("");
-	    System.err.println("At least one of -pp, -pw, or -k must be provided.");
+	    System.err.println("At least one of -pp, -pw, or -k must be provided,");
+	    System.err.println("or use -gui to open the graphical interface.");
 	    System.err.println("Keys, passwords, and passphrases written to stdout by default.");
 	    System.err.println("");
 	    System.err.println(VERSION);
@@ -743,6 +836,15 @@ public class RandPassGenerator {
 	    System.err.println("Command line had " + errs + " errors.");
 	    System.err.println("Please fix errors and try again.  Exiting.");
 	    System.exit(2);
+	}
+
+	if (opt.getValueAsBoolean("gui")) {
+	    if (java.awt.GraphicsEnvironment.isHeadless()) {
+		System.err.println("Error: -gui requested, but no graphical display is available.  Exiting.");
+		System.exit(7);
+	    }
+	    RandPassGeneratorGUI.launch();
+	    return;
 	}
 
 	// get necessary values

@@ -25,16 +25,37 @@ public class KeyWrapper {
 	private static String saltinput = "762043c38a8e1ad1c8502ec6e53d8c503fe9b28bf73f583e4fadd5888737a5ae";
 	
 
+	/**
+	 * Minimum length of a key encryption password, in characters.
+	 */
+	public static final int MIN_PASSWORD_LENGTH = 16;
+
+	 /**
+	  * Encrypt a key to a file, prompting on the console for a new
+	  * password if the supplied one is shorter than 16 characters.
+	  */
 	 public static void fileProcessor(char[] pass,String inputKey,File encryptedFile){
+		while (pass.length < MIN_PASSWORD_LENGTH) {
+	    	   System.out.println("Password must be at least 16 characters, failed to encrypt key");
+	    	   System.out.print("Provide a random password of at leaset 16 characters: ");  
+	    	   //BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+	    	   Console br = System.console();
+	    	pass = br.readPassword();
+		 }
+		wrapKeyToFile(pass, inputKey, encryptedFile);
+	 }
+
+	 /**
+	  * Encrypt a key to a file using a key encryption key derived from
+	  * the supplied password.  Never prompts on the console.
+	  *
+	  * @param pass password of at least 16 characters
+	  * @param inputKey the key to wrap
+	  * @param encryptedFile destination file
+	  * @return true if the encrypted file was written, false otherwise
+	  */
+	 public static boolean wrapKeyToFile(char[] pass,String inputKey,File encryptedFile){
 		 try {
-			 
-			while (pass.length < 16) {
-		    	   System.out.println("Password must be at least 16 characters, failed to encrypt key");
-		    	   System.out.print("Provide a random password of at leaset 16 characters: ");  
-		    	   //BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-		    	   Console br = System.console();
-		    	pass = br.readPassword();
-			 }
 			//DPKDF2  NIST SP 800-132
 			// salt value
 			 byte[] salt = new String(saltinput).getBytes();
@@ -60,19 +81,20 @@ public class KeyWrapper {
 		        SecretKey WrapThisKey = new SecretKeySpec(newKey, "AES");
 
 		      
-		       if (pass.length < 16) {
+		       if (pass.length < MIN_PASSWORD_LENGTH) {
 		    	   System.out.println("Password must be at least 16 characters, failed to encrypt key");
-		    	   return;
+		    	   return false;
 		       }else {
 		    	   cipher.init(cipherMode, cipherKey); 
 		       }
 		       byte[] outputBytes = cipher.wrap(WrapThisKey);
-		       FileOutputStream outputStream = new FileOutputStream(encryptedFile);
-		       outputStream.write(outputBytes);
-		       
-		       outputStream.close();
+		       try (FileOutputStream outputStream = new FileOutputStream(encryptedFile)) {
+		    	   outputStream.write(outputBytes);
+		       }
+		       return true;
 		    } catch (NoSuchPaddingException | NoSuchAlgorithmException | InvalidKeyException | IllegalBlockSizeException | IOException | NoSuchProviderException | InvalidKeySpecException e) {
 		    	e.printStackTrace();
+		    	return false;
 			}
 	 }
 		

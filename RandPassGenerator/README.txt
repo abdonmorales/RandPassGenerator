@@ -50,6 +50,8 @@ Unusual options:
 -sep S    For chunk formatting, use S as the separator (default: -)
 
 -rcc N    For passphrases, randomly upcase first N letters of each word (default: 0)
+
+-gui      Open the graphical user interface (Swing, Nimbus look and feel); all other options are ignored
   
 At least one of the options -pw, -pp, or -k must be supplied.  The keys, passwords, or passphrases produced by RandPassGenerator will be written to the standard output (stdout), so they can easily be redirected to a file. The -out option can also be used to write the output to a file.  All messages are written to the standard error (stderr).  
 
@@ -58,6 +60,15 @@ Detailed log messages are appended to the specified log file - if the log file c
 Note that the -pwcs option is a little strange.  Each character in the value represents a full set of characters.  Any lowercase letter
 means "add a character set of all lowercase letters", any uppercase letter means "add a set of all uppercase letter", any digit means
 "add a set of all digits", and any thing else means "add a set of all punctuation marks".  There is no way to supply fully custom character set.  Normally, you should not use the -pwcs option, you should let RandPassGenerator use its default character set.
+
+
+GRAPHICAL INTERFACE
+
+RandPassGenerator also has a graphical interface, built with Swing and using the Nimbus look and feel.  It offers the same password, passphrase, and key generation settings as the command line, can encrypt generated keys with a password, and can decrypt encrypted key files.  Open it with:
+
+    java -jar PassGenerator.jar -gui
+
+Running the jar with no arguments and no console attached (for example, by double-clicking it) also opens the graphical interface.
 
 
 Below are some examples of running RandPassGenerator in normal ways:

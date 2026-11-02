@@ -145,3 +145,12 @@ CHANGES FROM  1.3.3  to  1.3.4
 * Increased the minimum word length for passphrases to 3 letters
 * Removed various unwanted words from the builtin wordlist
 * Stopped passing the Ant runtime to the Java compiler
+
+CHANGES SINCE  1.3.4
+* Added a Swing graphical user interface (RandPassGeneratorGUI) using the
+  Nimbus look and feel.  Open it with the -gui option, or by running the jar
+  with no arguments and no console attached.  It supports passwords,
+  passphrases, and hex keys with all the generation settings, encryption of
+  generated keys with a password, and decryption of encrypted key files.
+* Added KeyWrapper.wrapKeyToFile and KeyUnwrapper.unwrapKeyToFile, which
+  report success or failure and never prompt on the console.

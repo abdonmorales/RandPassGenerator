@@ -26,6 +26,14 @@ The RandPassGenerator can run from a terminal or console. The command-line synta
 
 	java -jar PassGenerator.jar  [options]
 
+### Graphical interface
+
+RandPassGenerator also includes a Swing graphical interface (using the Nimbus look and feel) that offers the same password, passphrase, and key generation features, plus key encryption and decryption, without needing the command line. Open it with:
+
+	java -jar PassGenerator.jar -gui
+
+Double-clicking the jar file (running it with no arguments and no console attached) also opens the graphical interface. The interface writes its log to ./randpass.log, the same as the command-line tool.
+
 ### Options
 
 -v	  {Print verbose messages during operation, in addition to logging}
@@ -61,6 +69,8 @@ Unusual options:
 -sep S    {For chunk formatting, use S as the separator (default: -)}
 
 -rcc N    {For passphrases - impose random camel-case; randomly uppercase the first N letters (default: 0)}
+
+-gui      {Open the graphical user interface; all other options are ignored}
 
 At least one of the options -pw, -pp, or -k must be supplied. The keys, passwords, or passphrases produced by RandPassGenerator will be written to the standard output (stdout), so they can easily be redirected to a file. The -out option can also be used to write the output to a file. All messages are written to the standard error (stderr).
 

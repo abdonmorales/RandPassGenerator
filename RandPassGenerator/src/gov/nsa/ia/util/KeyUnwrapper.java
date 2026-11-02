@@ -28,6 +28,19 @@ public class KeyUnwrapper {
 	
 
 	 public static void fileProcessor(String PW,File encryptedFile,File decryptedFile){
+		 unwrapKeyToFile(PW, encryptedFile, decryptedFile);
+	 }
+
+	 /**
+	  * Decrypt an encrypted key file using a key encryption key derived
+	  * from the supplied password, and write the key to decryptedFile.
+	  *
+	  * @param PW the password used to encrypt the key (at least 16 characters)
+	  * @param encryptedFile the encrypted key file to read
+	  * @param decryptedFile destination for the decrypted key
+	  * @return true if the key was decrypted and written, false otherwise
+	  */
+	 public static boolean unwrapKeyToFile(String PW,File encryptedFile,File decryptedFile){
 		 try {
 			 
 			//DPKDF2  NIST SP 800-132
@@ -54,25 +67,23 @@ public class KeyUnwrapper {
 
 		       if (PW.getBytes().length < 16) {
 		    	   System.out.println("Password must be at least 16 characters, failed to decrypt key");
-		    	   return;
+		    	   return false;
 		       }else {
 		    	   cipher.init(cipherMode, cipherKey, cipher.getParameters()); 
 		       }
-		       FileInputStream inputStream = new FileInputStream(encryptedFile);
-			      byte[] inputBytes = new byte[(int) encryptedFile.length()];
-			      inputStream.read(inputBytes);
-			      Key outputKey = cipher.unwrap(inputBytes, "AES", Cipher.SECRET_KEY);
-			      
-			      byte[] outputBytes = outputKey.getEncoded();
-			       
-			      FileOutputStream outputStream = new FileOutputStream(decryptedFile);
-			      outputStream.write(outputBytes);
+		       byte[] inputBytes = java.nio.file.Files.readAllBytes(encryptedFile.toPath());
+		       Key outputKey = cipher.unwrap(inputBytes, "AES", Cipher.SECRET_KEY);
 
-			      inputStream.close();
-			      outputStream.close();
+		       byte[] outputBytes = outputKey.getEncoded();
+
+		       try (FileOutputStream outputStream = new FileOutputStream(decryptedFile)) {
+		    	   outputStream.write(outputBytes);
+		       }
+		       return true;
 
 		    } catch (NoSuchPaddingException | NoSuchAlgorithmException | InvalidKeyException | IOException | NoSuchProviderException | InvalidKeySpecException | InvalidAlgorithmParameterException e) {
 		    	e.printStackTrace();
+		    	return false;
 			}
 	 }
 	
