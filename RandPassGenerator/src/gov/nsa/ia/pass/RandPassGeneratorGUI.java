@@ -578,6 +578,19 @@ public class RandPassGeneratorGUI extends JFrame {
 		    showError("The custom character set file must be a readable file.");
 		    return null;
 		}
+		int unique;
+		try {
+		    String content = new String(Files.readAllBytes(f.toPath()), StandardCharsets.UTF_8);
+		    unique = gov.nsa.ia.gen.CharacterSet.uniqueCharset(content.toCharArray()).length;
+		} catch (IOException ex) {
+		    showError("Could not read the custom character set file:\n" + ex.getMessage());
+		    return null;
+		}
+		if (unique < 2) {
+		    showError("The custom character set file must contain at least two different\n"
+			      + "printable characters (it has " + unique + ").");
+		    return null;
+		}
 		r.charsetFile = path;
 	    }
 	} else if (TYPE_PASSPHRASES.equals(r.type)) {
@@ -598,6 +611,15 @@ public class RandPassGeneratorGUI extends JFrame {
 		}
 	    }
 	} else {
+	    if (r.strength % 8 != 0) {
+		showError("Hex key strength must be a multiple of 8 bits (for example 128, 160, or 256).");
+		return null;
+	    }
+	    if (encryptCheck.isSelected() && !RandPassGenerator.isEncryptableKeyStrength(r.strength)) {
+		showError("To encrypt keys, the strength must be a multiple of 32 bits\n"
+			  + "and at least 64 (for example 128, 160, 192, or 256).");
+		return null;
+	    }
 	    if (encryptCheck.isSelected()) {
 		char[] pw = encPasswordField.getPassword();
 		char[] confirm = encConfirmField.getPassword();
@@ -623,6 +645,8 @@ public class RandPassGeneratorGUI extends JFrame {
 		}
 		r.encPassword = pw;
 		r.encDir = dir;
+		encPasswordField.setText("");
+		encConfirmField.setText("");
 	    }
 	}
 	return r;
@@ -670,7 +694,17 @@ public class RandPassGeneratorGUI extends JFrame {
 		} catch (InterruptedException | ExecutionException ex) {
 		    Throwable cause = (ex.getCause() != null) ? ex.getCause() : ex;
 		    setBusy(false, "Generation failed.");
-		    showError("Generation failed: " + cause);
+		    String why;
+		    if (TYPE_PASSPHRASES.equals(req.type) && req.wordList != null) {
+			why = "The word list could not be used.  Check that it can be read and has\n"
+			    + "at least two different words within the chosen word length.";
+		    } else if (req.charsetFile != null) {
+			why = "The custom character set could not be used.";
+		    } else {
+			why = "Unexpected error: " + cause;
+		    }
+		    showError("Failed to generate " + req.type.toLowerCase() + ".\n" + why
+			      + "\n\nSee " + RandPassGenerator.DEFAULT_LOGFILE + " for details.");
 		    return;
 		}
 		if (!out.isEmpty()) {
@@ -680,8 +714,11 @@ public class RandPassGeneratorGUI extends JFrame {
 		if (cnt > 0) {
 		    String noun = req.type.toLowerCase();
 		    if (cnt == 1) noun = noun.substring(0, noun.length() - 1);
-		    setBusy(false, "Generated " + cnt + " " + noun
-			    + " at strength " + req.strength + " bits.");
+		    String done = "Generated " + cnt + " " + noun + " at strength " + req.strength + " bits";
+		    if (req.encDir != null) {
+			done += ", encrypted to " + req.encDir.getAbsolutePath();
+		    }
+		    setBusy(false, done + ".");
 		} else {
 		    setBusy(false, "Failed to generate " + req.type.toLowerCase() + ".");
 		    StringBuilder msg = new StringBuilder("Failed to generate " + req.type.toLowerCase() + ".");
@@ -714,6 +751,7 @@ public class RandPassGeneratorGUI extends JFrame {
 	}
 	final String pw = new String(pwChars);
 	Arrays.fill(pwChars, '\0');
+	decPasswordField.setText("");
 	final File outFile = new File(path + "_decrypted.txt");
 
 	decResultField.setText("");

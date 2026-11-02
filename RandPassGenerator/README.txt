@@ -68,9 +68,9 @@ RandPassGenerator also has a graphical interface, built with Swing and using the
 
     java -jar PassGenerator.jar -gui
 
-Running the jar with no arguments and no console attached (for example, by double-clicking it) also opens the graphical interface.
+Running the jar with no arguments from outside a terminal (for example, by double-clicking it) also opens the graphical interface; from a terminal, no arguments prints the usage message as before.
 
-The Generate tab offers passwords, passphrases, or hex keys, with the count, strength, chunk formatting, character set, passphrase word length, random uppercase, word list, and key encryption settings that the command-line options provide.  Key encryption takes a password of at least 16 characters, typed and confirmed in the window, and writes KEY_ID.enc files to a chosen folder.  Results can be copied to the clipboard or saved to a file.  The Decrypt Key tab decrypts an encrypted key file, shows the key, and saves it next to the encrypted file as FILE_decrypted.txt, the same as -decrypt.  The graphical interface logs to the same files as the command-line tool.
+The Generate tab offers passwords, passphrases, or hex keys, with the count, strength, chunk formatting, character set, passphrase word length, random uppercase, word list, and key encryption settings that the command-line options provide.  Key encryption takes a password of at least 16 characters, typed and confirmed in the window, and writes KEY_ID.enc files to a chosen folder; it needs a key strength that is a multiple of 32 bits and at least 64 (for example 128, 160, 192, or 256).  Results can be copied to the clipboard or saved to a file.  The Decrypt Key tab decrypts an encrypted key file, shows the key, and saves it next to the encrypted file as FILE_decrypted.txt, the same as -decrypt.  The graphical interface logs to the same files as the command-line tool.
 
 
 Below are some examples of running RandPassGenerator in normal ways:

@@ -39,14 +39,14 @@ RandPassGenerator also includes a Swing graphical interface, using the Nimbus lo
 
 	java -jar PassGenerator.jar -gui
 
-Double-clicking the jar file (running it with no arguments and no console attached) also opens the graphical interface.
+Double-clicking the jar file (running it with no arguments from outside a terminal) also opens the graphical interface. Running it with no arguments from a terminal prints the usage message, as before.
 
 The window has two tabs:
 
 * **Generate** - choose passwords, passphrases, or hex keys, how many to make, and the strength in bits (default 160, maximum 384). Passwords and keys can be split into chunks with a separator (like -c and -sep). Type-specific options appear below the settings:
   * Passwords: the default character set, a chosen mix of lowercase, uppercase, digits, and punctuation (like -pwcs), or a custom character set file (like -pwcustom).
   * Passphrases: the longest word length (like -pplen), random uppercasing of the first N letters of each word (like -rcc), and an optional word list file or URL (like -ppurl).
-  * Hex keys: optionally encrypt each key with a password of at least 16 characters, writing KEY_ID.enc files to a chosen folder (like -enc, but the password is typed once in the window and confirmed instead of at a console prompt).
+  * Hex keys: the strength must be a multiple of 8 bits. Optionally encrypt each key with a password of at least 16 characters, writing KEY_ID.enc files to a chosen folder (like -enc, but the password is typed once in the window and confirmed instead of at a console prompt). Encryption needs a key strength that is a multiple of 32 bits and at least 64 (for example 128, 160, 192, or 256).
 
   Results appear in the output area, where they can be copied to the clipboard or saved to a file.
 * **Decrypt Key** - choose an encrypted key file and enter its password. The decrypted key is shown in the window and saved next to the encrypted file as FILE_decrypted.txt, the same as -decrypt.

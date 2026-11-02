@@ -65,10 +65,15 @@ public class KeyWrapper {
 			  
 			 int derivedKeyLength = 256 ; // Should be at least 256 bits.
 			  
-			 KeySpec spec = new PBEKeySpec(pass, salt, iterCount, derivedKeyLength);
+			 PBEKeySpec spec = new PBEKeySpec(pass, salt, iterCount, derivedKeyLength);
 			 SecretKeyFactory f = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512");
 			 
-			 SecretKey secretKey = f.generateSecret(spec);
+			 SecretKey secretKey;
+			 try {
+				 secretKey = f.generateSecret(spec);
+			 } finally {
+				 spec.clearPassword();
+			 }
 			 SecretKey cipherKey = new SecretKeySpec(secretKey.getEncoded(), "AES");
 			 
 			 //RFC 3394

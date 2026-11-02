@@ -568,7 +568,25 @@ public class RandPassGenerator {
 	    message("Error - key encryption password must be at least " + KeyWrapper.MIN_PASSWORD_LENGTH + " characters");
 	    return -1;
 	}
+	if (encPassword != null && !isEncryptableKeyStrength(strength)) {
+	    logger.warning("RandPassGen - key strength " + strength + " cannot be encrypted, error");
+	    message("Error - to encrypt keys, the strength must be a multiple of 32 bits and at least 64 bits");
+	    return -1;
+	}
 	return generateKeys(count, strength, encPassword != null, encPassword, encDir);
+    }
+
+    /**
+     * Return true if hex keys of the given strength can be encrypted with
+     * KeyWrapper.  AES key wrap (RFC 3394) needs at least 16 bytes in
+     * multiples of 8; a key of S bits has S/4 hex characters, so S must be
+     * a multiple of 32 and at least 64.
+     *
+     * @param strength key strength in bits
+     * @return true if keys of this strength can be encrypted
+     */
+    public static boolean isEncryptableKeyStrength(int strength) {
+	return strength >= 64 && (strength % 32) == 0;
     }
 
     private int generateKeys(int count, int strength, boolean enc, char[] encPassword, File encDir) {
@@ -794,6 +812,44 @@ public class RandPassGenerator {
     }
 
     /**
+     * Guess whether we were started outside of any terminal, such as by
+     * double-clicking the jar file.  True only if there is no interactive
+     * console and no TERM environment variable; a terminal session whose
+     * output is redirected (for example "java -jar PassGenerator.jar &gt; out")
+     * still has TERM set, so it gets the usual command-line behaviour.
+     */
+    private static boolean launchedWithoutTerminal() {
+	Console c = System.console();
+	boolean interactive = false;
+	if (c != null) {
+	    interactive = true;
+	    // Java 22+ returns a Console even when not attached to a
+	    // terminal; Console.isTerminal() (added in 22) tells us.
+	    try {
+		java.lang.reflect.Method m = Console.class.getMethod("isTerminal");
+		interactive = Boolean.TRUE.equals(m.invoke(c));
+	    } catch (Exception e) {
+		// older Java: a non-null Console means a terminal
+	    }
+	}
+	return !interactive && System.getenv("TERM") == null;
+    }
+
+    /**
+     * Return true if a graphical display is available and can be opened.
+     */
+    private static boolean canOpenDisplay() {
+	if (java.awt.GraphicsEnvironment.isHeadless()) return false;
+	try {
+	    java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+	    java.awt.Toolkit.getDefaultToolkit();
+	    return true;
+	} catch (java.awt.AWTError | LinkageError | RuntimeException e) {  // includes HeadlessException
+	    return false;
+	}
+    }
+
+    /**
      * Main method for the RandPassGenerator application - this method
      * processes the command-line args, then initializes the RandPassGenerator
      * and the RandManager, then generates the requested values.
@@ -806,10 +862,10 @@ public class RandPassGenerator {
 	
 	OptionManager opt = makeOptions();
 
-	// With no arguments and no attached console (e.g. the jar was
-	// double-clicked), open the graphical interface instead of printing
-	// usage text that nobody would see.
-	if (args.length == 0 && System.console() == null && !java.awt.GraphicsEnvironment.isHeadless()) {
+	// With no arguments and no terminal (e.g. the jar was double-clicked),
+	// open the graphical interface instead of printing usage text that
+	// nobody would see.
+	if (args.length == 0 && launchedWithoutTerminal() && canOpenDisplay()) {
 	    RandPassGeneratorGUI.launch();
 	    return;
 	}
@@ -839,7 +895,7 @@ public class RandPassGenerator {
 	}
 
 	if (opt.getValueAsBoolean("gui")) {
-	    if (java.awt.GraphicsEnvironment.isHeadless()) {
+	    if (!canOpenDisplay()) {
 		System.err.println("Error: -gui requested, but no graphical display is available.  Exiting.");
 		System.exit(7);
 	    }

@@ -52,10 +52,17 @@ public class KeyUnwrapper {
 			  
 			 int derivedKeyLength = 256 ; // Should be at least 256 bits.
 			  
-			 KeySpec spec = new PBEKeySpec(PW.toCharArray(), salt, iterCount, derivedKeyLength);
+			 char[] pwChars = PW.toCharArray();
+			 PBEKeySpec spec = new PBEKeySpec(pwChars, salt, iterCount, derivedKeyLength);
+			 java.util.Arrays.fill(pwChars, '\0');
 			 SecretKeyFactory f = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512");
 			 
-			 SecretKey secretKey = f.generateSecret(spec);
+			 SecretKey secretKey;
+			 try {
+				 secretKey = f.generateSecret(spec);
+			 } finally {
+				 spec.clearPassword();
+			 }
 			 
 			 SecretKey cipherKey = new SecretKeySpec(secretKey.getEncoded(), "AES");
 			 
